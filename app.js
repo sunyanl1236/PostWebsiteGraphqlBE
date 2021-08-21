@@ -10,6 +10,8 @@ const { graphqlHTTP } = require('express-graphql');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolver');
 
+const auth = require('./middleware/auth');
+
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -53,13 +55,15 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(auth);
+
 // the only endpoint in graphql
 app.use(
   '/graphql',
   graphqlHTTP({
     schema: graphqlSchema,
     rootValue: graphqlResolver,
-    graphiql: true, // used to test endpoint instead of postman
+    graphiql: true,
     customFormatErrorFn(err) {
       if (!err.originalError) {
         return err;
