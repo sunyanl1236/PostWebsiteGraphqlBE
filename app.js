@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -57,6 +58,27 @@ app.use((req, res, next) => {
 
 app.use(auth);
 
+// upload image steps:
+// 1. FE send a PUT request to BE to store the image
+// 2. BE return the imageUrl, then FE send another request
+// to create the post with the imageUrl
+app.put('/post-image', (req, res, next) => {
+  if (!req.isAuth) {
+    throw new Error('Not authenticated!');
+  }
+  // file is foltered and stored in /images by multer
+  if (!req.file) {
+    return res.status(200).json({ message: 'No file provided!' });
+  }
+  // clear all image in oldPath (provided by FE)
+  if (req.body.oldPath) {
+    clearImage(req.body.oldPath);
+  }
+  return res
+    .status(201)
+    .json({ message: 'Image saved!', filePath: req.file.path });
+});
+
 // the only endpoint in graphql
 app.use(
   '/graphql',
@@ -95,3 +117,8 @@ mongoose
     app.listen(3000);
   })
   .catch((err) => console.log(err));
+
+const clearImage = (filePath) => {
+  filePath = path.join(__dirname, '..', filePath);
+  fs.unlink(filePath, (err) => console.log(err));
+};
